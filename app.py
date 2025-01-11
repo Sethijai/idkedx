@@ -1,12 +1,9 @@
-from flask import Flask, jsonify, Response, send_from_directory
+from flask import Flask, render_template, jsonify, Response
 import requests
 
 app = Flask(__name__)
 
-# Constants
-ACCOUNT_ID = "6415636611001"
-BC_URL = f"https://edge.api.brightcove.com/playback/v1/accounts/{ACCOUNT_ID}/videos/"
-LIVESTREAM_TOKEN_URL = "https://spec.iitschool.com/api/v1/livestreamToken"
+# Headers for API requests
 HEADERS = {
     "Accept": "application/json",
     "origintype": "web",
@@ -15,41 +12,41 @@ HEADERS = {
     "Content-Type": "application/x-www-form-urlencoded"
 }
 
-@app.route('/stream/<class_id>', methods=['GET'])
-def stream_video(class_id):
-    # Fetch class details
-    class_detail_url = f"https://spec.iitschool.com/api/v1/class-detail/{class_id}"
-    response = requests.get(class_detail_url, headers=HEADERS)
+BC_URL = "https://edge.api.brightcove.com/playback/v1/accounts/6415636611001/videos/"
+LIVESTREAM_TOKEN_URL = "https://spec.iitschool.com/api/v1/livestreamToken"
 
-    if response.status_code == 200:
-        data = response.json()
-        lesson_url = data.get("data", {}).get("class_detail", {}).get("lessonUrl")
-        if not lesson_url:
-            return jsonify({"error": "Lesson URL not found"}), 404
 
-        # Fetch Brightcove token
-        livestream_token_url = f"{LIVESTREAM_TOKEN_URL}?base=web&module=batch&type=brightcove&vid={class_id}"
-        token_response = requests.get(livestream_token_url, headers=HEADERS)
+@app.route('/play/<class_id>', methods=['GET'])
+def play_video(class_id):
+    try:
+        # Fetch class details
+        class_detail_url = f"https://spec.iitschool.com/api/v1/class-detail/{class_id}"
+        response = requests.get(class_detail_url, headers=HEADERS)
 
-        if token_response.status_code == 200:
-            token_data = token_response.json()
-            brightcove_token = token_data["data"]["token"]
-            brightcove_link = f"{BC_URL}{lesson_url}/master.m3u8?bcov_auth={brightcove_token}"
-            
-            # Proxy the Brightcove video stream
-            stream_response = requests.get(brightcove_link, stream=True)
-            return Response(
-                stream_response.iter_content(chunk_size=1024),
-                content_type=stream_response.headers.get('Content-Type')
-            )
+        if response.status_code == 200:
+            data = response.json()
+            lesson_url = data.get("data", {}).get("class_detail", {}).get("lessonUrl")
+            if not lesson_url:
+                return jsonify({"error": "Lesson URL not found"}), 404
+
+            # Fetch Brightcove token
+            livestream_token_url = f"{LIVESTREAM_TOKEN_URL}?base=web&module=batch&type=brightcove&vid={class_id}"
+            token_response = requests.get(livestream_token_url, headers=HEADERS)
+
+            if token_response.status_code == 200:
+                token_data = token_response.json()
+                brightcove_token = token_data["data"]["token"]
+                brightcove_link = f"{BC_URL}{lesson_url}/master.m3u8?bcov_auth={brightcove_token}"
+
+                # Render the player page with the Brightcove link
+                return render_template('player.html', video_url=brightcove_link)
+            else:
+                return jsonify({"error": "Failed to fetch Brightcove token"}), 500
         else:
-            return jsonify({"error": "Failed to fetch Brightcove token"}), 500
-    else:
-        return jsonify({"error": "Failed to fetch class details"}), 500
+            return jsonify({"error": "Failed to fetch class details"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/')
-def serve_frontend():
-    return send_from_directory('frontend', 'index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(debug=True)
