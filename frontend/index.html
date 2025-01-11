@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Player</title>
+  <title>Secure Video Player</title>
   <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet">
   <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
 </head>
 <body>
   <div style="text-align: center;">
-    <h1>Brightcove Video Player</h1>
+    <h1>Secure Brightcove Video Player</h1>
     <video id="player" class="video-js vjs-default-skin" controls preload="auto" width="800" height="450"></video>
   </div>
 
@@ -20,10 +20,10 @@
     fetch(apiUrl)
       .then(response => response.json())
       .then(data => {
-        if (data.brightcove_url) {
+        if (data.proxy_url) {
           const player = videojs('player');
           player.src({
-            src: data.brightcove_url,
+            src: data.proxy_url,
             type: 'application/x-mpegURL'
           });
           player.ready(function () {
