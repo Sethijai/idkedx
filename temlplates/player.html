@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player</title>
+    <link href="https://vjs.zencdn.net/8.0.4/video-js.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+        }
+        .video-container {
+            width: 80%;
+            max-width: 1080px;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <video id="videoPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" data-setup='{}'>
+            <source src="{{ video_url }}" type="application/x-mpegURL">
+        </video>
+    </div>
+
+    <script src="https://vjs.zencdn.net/8.0.4/video.min.js"></script>
+    <script>
+        const player = videojs('videoPlayer', {
+            playbackRates: [0.5, 1, 1.5, 2],
+            fluid: true,
+            controlBar: {
+                fullscreenToggle: true,
+                volumePanel: {
+                    inline: false
+                }
+            }
+        });
+
+        // Optional: Add quality selection (if supported by Brightcove)
+        player.qualityLevels().on('addqualitylevel', function(event) {
+            console.log('Quality level added:', event.qualityLevel);
+        });
+    </script>
+</body>
+</html>
