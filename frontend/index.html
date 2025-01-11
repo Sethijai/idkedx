@@ -15,25 +15,17 @@
 
   <script>
     const classId = window.location.pathname.substring(1); // Extract class_id from URL
-    const apiUrl = `/${classId}`; // Backend endpoint for the class_id
+    const streamUrl = `/stream/${classId}`; // Backend stream endpoint
 
-    fetch(apiUrl)
-      .then(response => response.json())
-      .then(data => {
-        if (data.proxy_url) {
-          const player = videojs('player');
-          player.src({
-            src: data.proxy_url,
-            type: 'application/x-mpegURL'
-          });
-          player.ready(function () {
-            console.log('Player is ready!');
-          });
-        } else {
-          console.error('Failed to load video URL');
-        }
-      })
-      .catch(error => console.error('Error fetching Brightcove URL:', error));
+    const player = videojs('player');
+    player.src({
+      src: streamUrl,
+      type: 'application/x-mpegURL'
+    });
+
+    player.ready(function () {
+      console.log('Player is ready!');
+    });
   </script>
 </body>
 </html>
