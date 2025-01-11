@@ -1,6 +1,5 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, Response, send_from_directory
 import requests
-import os
 
 app = Flask(__name__)
 
@@ -17,7 +16,7 @@ HEADERS = {
 }
 
 @app.route('/<class_id>', methods=['GET'])
-def get_player(class_id):
+def serve_player(class_id):
     # Fetch lesson URL
     class_detail_url = f"https://spec.iitschool.com/api/v1/class-detail/{class_id}"
     response = requests.get(class_detail_url, headers=HEADERS)
@@ -36,7 +35,39 @@ def get_player(class_id):
             token_data = token_response.json()
             brightcove_token = token_data["data"]["token"]
             brightcove_link = f"{BC_URL}{lesson_url}/master.m3u8?bcov_auth={brightcove_token}"
-            return jsonify({"brightcove_url": brightcove_link})
+            return jsonify({"proxy_url": f"/stream/{class_id}"})
+        else:
+            return jsonify({"error": "Failed to fetch Brightcove token"}), 500
+    else:
+        return jsonify({"error": "Failed to fetch class details"}), 500
+
+@app.route('/stream/<class_id>', methods=['GET'])
+def proxy_stream(class_id):
+    # Fetch lesson URL
+    class_detail_url = f"https://spec.iitschool.com/api/v1/class-detail/{class_id}"
+    response = requests.get(class_detail_url, headers=HEADERS)
+
+    if response.status_code == 200:
+        data = response.json()
+        lesson_url = data.get("data", {}).get("class_detail", {}).get("lessonUrl")
+        if not lesson_url:
+            return jsonify({"error": "Lesson URL not found"}), 404
+
+        # Fetch Brightcove token
+        livestream_token_url = f"{LIVESTREAM_TOKEN_URL}?base=web&module=batch&type=brightcove&vid={class_id}"
+        token_response = requests.get(livestream_token_url, headers=HEADERS)
+
+        if token_response.status_code == 200:
+            token_data = token_response.json()
+            brightcove_token = token_data["data"]["token"]
+            brightcove_link = f"{BC_URL}{lesson_url}/master.m3u8?bcov_auth={brightcove_token}"
+            
+            # Proxy the video stream
+            stream_response = requests.get(brightcove_link, stream=True)
+            return Response(
+                stream_response.iter_content(chunk_size=1024),
+                content_type=stream_response.headers.get('Content-Type')
+            )
         else:
             return jsonify({"error": "Failed to fetch Brightcove token"}), 500
     else:
