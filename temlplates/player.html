@@ -4,47 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Player</title>
-    <link href="https://vjs.zencdn.net/8.0.4/video-js.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.8.3/video-js.css" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #000;
-        }
-        .video-container {
-            width: 80%;
-            max-width: 1080px;
+        .video-js {
+            width: 100%;
+            height: auto;
         }
     </style>
 </head>
 <body>
-    <div class="video-container">
-        <video id="videoPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" data-setup='{}'>
-            <source src="{{ video_url }}" type="application/x-mpegURL">
-        </video>
+    <h1>Video Player</h1>
+    <video id="videoPlayer" class="video-js vjs-default-skin" controls preload="auto">
+        <source src="{{ video_url }}" type="application/x-mpegURL">
+        Your browser does not support HTML5 video.
+    </video>
+    
+    <div>
+        <h3>Playback Options</h3>
+        <label for="speed">Speed:</label>
+        <select id="speed" onchange="changeSpeed()">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+        </select>
+        
+        <label for="quality">Quality:</label>
+        <select id="quality" onchange="changeQuality()">
+            <option value="720p">720p</option>
+            <option value="1080p">1080p</option>
+            <option value="1440p">1440p</option>
+            <option value="2160p">2160p</option>
+        </select>
     </div>
 
-    <script src="https://vjs.zencdn.net/8.0.4/video.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.8.3/video.min.js"></script>
     <script>
-        const player = videojs('videoPlayer', {
-            playbackRates: [0.5, 1, 1.5, 2],
-            fluid: true,
-            controlBar: {
-                fullscreenToggle: true,
-                volumePanel: {
-                    inline: false
-                }
-            }
-        });
+        var player = videojs('videoPlayer');
 
-        // Optional: Add quality selection (if supported by Brightcove)
-        player.qualityLevels().on('addqualitylevel', function(event) {
-            console.log('Quality level added:', event.qualityLevel);
-        });
+        function changeSpeed() {
+            var speed = document.getElementById('speed').value;
+            player.playbackRate(speed);
+        }
+
+        function changeQuality() {
+            var quality = document.getElementById('quality').value;
+            // This is a placeholder for switching qualities
+            // Brightcove player might need different logic depending on the stream's configurations
+            alert("Changing quality to " + quality + " is not implemented in this demo.");
+        }
     </script>
 </body>
 </html>
